@@ -38,4 +38,31 @@ void bubble_sort_inplace(int *arr, int n) {
         if (!swapped) break; // si no hubo intercambios en la pasada completa, el arreglo ya esta ordenado: salimos del bucle externo anticipadamente
     }
 }
+/* función que toma una matriz contigua (mat) con rows x cols,
+   crea una copia lineal (opcionalmente) y ordena en su lugar */
 
+void procesar_matriz(int *mat, int rows, int cols) {
+    int total = rows * cols;
+
+    printf("Matriz original (%dx%d):\n", rows, cols);
+    imp_matrix(mat, rows, cols);
+    putchar('\n');
+
+    // Convertir virtualmente a arreglo 1D, usamos el mismo puntero 'mat' 
+    int *arr = mat; /* puntero al arreglo unidimensional */
+
+    // Ordenar usando BubbleSort in-place (sin arreglo auxiliar)
+    bubble_sort_inplace(arr, total);
+
+    // Mostrar el arreglo ordenado (lineal)
+    printf("Arreglo ordenado (1D):\n");
+    for (int k = 0; k < total; ++k) {
+        printf("%d ", *(arr + k));
+    }
+    putchar('\n');
+
+    // Reconstruir y mostrar la matriz con las mismas dimensiones 
+    printf("\nMatriz reconstruida (%dx%d) después de ordenar:\n", rows, cols);
+    imp_matrix(mat, rows, cols);
+    putchar('\n');
+}
