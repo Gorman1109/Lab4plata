@@ -64,3 +64,103 @@ int equals_insensitive(const char *a, const char *b) {
     free(la); free(lb);
     return res;
 }
+
+
+int main(int argc, char *argv[]) {
+    if (argc != 4) {
+        fprintf(stderr, "Uso: %s archivo_entrada palabra_a_buscar palabra_reemplazo\n", argv[0]);
+        return EXIT_FAILURE;
+    }
+
+    const char *infile = argv[1];
+    const char *search = argv[2];
+    const char *replace = argv[3];
+
+    if (strlen(search) == 0) {
+        fprintf(stderr, "La palabra a buscar no puede ser vacia.\n");
+        return EXIT_FAILURE;
+    }
+
+    FILE *fin = fopen(infile, "r");
+    if (!fin) {
+        perror("Error al abrir archivo de entrada");
+        return EXIT_FAILURE;
+    }
+
+    char *outname = make_output_filename(infile);
+    if (!outname) {
+        fprintf(stderr, "Error al crear nombre de archivo de salida\n");
+        fclose(fin);
+        return EXIT_FAILURE;
+    }
+
+    FILE *fout = fopen(outname, "w");
+    if (!fout) {
+        perror("Error al abrir archivo de salida");
+        free(outname);
+        fclose(fin);
+        return EXIT_FAILURE;
+    }
+   
+   
+   
+    /* Procesamos carácter por caracter. Construimos "palabras" con caracteres alfanumericos
+       y consideramos cualquier otro caracter como separador/puntuacion. Preservamos los
+       separadores exactamente igual en la salida. */
+    int c;
+    char wordbuf[MAX_WORD];
+    size_t wlen = 0;
+
+    while ((c = fgetc(fin)) != EOF) {
+        if (isalnum((unsigned char)c)) {
+            /* acumular en palabra */
+            if (wlen + 1 < MAX_WORD) {
+                wordbuf[wlen++] = (char)c;
+            } else {
+                /* palabra excesivamente larga: escribir lo acumulado y resetear */
+                wordbuf[wlen] = '\0';
+                /* comparar y escribir */
+                if (equals_insensitive(wordbuf, search)) {
+                    fputs(replace, fout);
+                } else {
+                    fputs(wordbuf, fout);
+                }
+                wlen = 0;
+                /* continuar acumulando this char as first char */
+                wordbuf[wlen++] = (char)c;
+            }
+        } else {
+            /* fin de palabra (si existia): procesar */
+            if (wlen > 0) {
+                wordbuf[wlen] = '\0';
+                if (equals_insensitive(wordbuf, search)) {
+                    fputs(replace, fout);
+                } else {
+                    fputs(wordbuf, fout);
+                }
+                wlen = 0;
+            }
+            /* escribir el separador/puntuacion tal cual */
+            fputc(c, fout);
+        }
+    }
+
+    /* Si el archivo termina con una palabra sin separador al final */
+    if (wlen > 0) {
+        wordbuf[wlen] = '\0';
+        if (equals_insensitive(wordbuf, search)) {
+            fputs(replace, fout);
+        } else {
+            fputs(wordbuf, fout);
+        }
+    }
+
+    /* cerrar y liberar */
+    fclose(fin);
+    fclose(fout);
+    free(outname);
+
+    printf("Archivo procesado. Salida escrita en: %s\n", outname ? outname : "(nombre liberado)");
+    /* Nota: outname ya fue liberado; se deja mensaje informativo anterior a free en caso de error. */
+    return EXIT_SUCCESS;
+}
