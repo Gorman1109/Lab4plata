@@ -9,7 +9,7 @@
 
 #define MAX_WORD 1024
 
-/* Convierte una cadena a minúsculas (devuelve puntero a buffer dinámico).
+/* Convierte una cadena a minusculas (devuelve puntero a buffer dinámico).
    Caller debe liberar el resultado con free(). */
 
 //Facilita comparaciones insensibles a mayusculas sin modificar las cadenas originales
@@ -27,7 +27,7 @@ char *str_to_lower_alloc(const char *s) {
 char *make_output_filename(const char *inname) {
     const char *suffix = "_replaced";
     size_t len = strlen(inname);
-    /* buscar última '.' después del último '/' para mantener extensión si existe */
+    /* buscar ultima '.' despues del último '/' para mantener extension si existe */
     const char *last_slash = strrchr(inname, '/');
     const char *p = strrchr(inname, '.');
     if (p && (!last_slash || p > last_slash)) {
@@ -39,14 +39,28 @@ char *make_output_filename(const char *inname) {
         memcpy(out, inname, base_len);
         out[base_len] = '\0';
         strcat(out, suffix);
-        strcat(out, p); /* agrega extensión */
+        strcat(out, p); /* agrega extension */
         return out;
     } else {
-        /* no extensión detectable */
+        /* no extension detectable */
         char *out = malloc(len + strlen(suffix) + 1);
         if (!out) return NULL;
         strcpy(out, inname);
         strcat(out, suffix);
         return out;
     }
+}
+
+/* Compara dos palabras insensible a mayusculas.
+   Devuelve 1 si son iguales, 0 si no. */
+int equals_insensitive(const char *a, const char *b) {
+    char *la = str_to_lower_alloc(a);
+    char *lb = str_to_lower_alloc(b);
+    if (!la || !lb) {
+        free(la); free(lb);
+        return 0; /* en error de malloc, tratar como no iguales */
+    }
+    int res = (strcmp(la, lb) == 0);
+    free(la); free(lb);
+    return res;
 }
